@@ -34,3 +34,4 @@ vignettes/*.pdf
 .Rproj.user
 all3flickrs_paper_files/
 all3flickrs_supp_files/
+.DS_Store
