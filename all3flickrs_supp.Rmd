@@ -1,0 +1,269 @@
+---
+title: "Supplementary Materials"
+author: "Elika Bergelson and Daniel Swingley"
+csl: apa.csl
+output:
+  html_document: default
+  bookdown::word_document2:
+    fig_caption: yes
+    reference_docx: word-styles-reference-01.docx
+  pdf_document: default
+  word_document: default
+header-includes: \setlength\parindent{24pt}
+bibliography: library02-27-17.bib
+---
+#####
+```{r file_info, echo = F}
+# Companion Data File for Bergelson & Swingley 2017, child dev
+# This is the *supplementary materials* rmd for
+# "Unfamiliar Talker or Altered Pronunciations"
+
+# The eyetracking data were collected from infants in Philadelphia on a Eyelink 1000+
+# The preprocessing script XX.r precedes subsequent analysis and graphs
+# The output of this pre-processing is a csv (XX.csv) 
+# This pre-processed data file then gets read in by XX.r
+# That's where data aggregation occurs
+# This .rmd,  creates a doc output
+# Please report any problems bugs or errors to Elika Bergelson (elika.bergelson@duke.edu)
+
+#reminders for formatting
+#Figure \@ref(fig:f-design).
+#Table \@ref(tab:t-homestats)) no underscores!
+#references: [@Barrett1978;@Rescorla1980] without name[-@Huettig2005]
+#fig.height=8, fig.width=10 maps onto 4.8" tall by 6"wide in word.
+
+#list of things to fix manually: cover page, header, line numbers
+```
+
+```{r setup, include = F}
+knitr::opts_chunk$set(
+  cache = T,  
+  fig.height = 12, 
+  fig.width = 16,
+  out.width = '.8\\linewidth' )
+knitr::opts_chunk$set(echo = TRUE)
+library(car)
+library(tidyverse)
+library(forcats)
+library(stringr)
+library(broom)
+library(bookdown)
+library(knitr)
+library(gridExtra)
+library(pander)
+library(heplots)
+options(tibble.width = Inf)
+options(scipen=999)
+
+#this gets rid of leading zeros!
+# thanks @scoa on stackoverflow you mystery person you!
+knit_hooks$set(inline =
+  function (x) {
+      if (is.numeric(x)) {
+          x = round(x, getOption("digits"))
+          if (x < 1 & x > -1) {
+            x = sub("0\\.","\\.",as.character(x)) 
+          }
+
+      }
+      paste(as.character(x), collapse = ", ")
+      }
+  )
+
+source(file = "all3flickrs_dataprep.R")
+study_label <- c(orig = "B&S12", vamp = "Mispron.",voice = "New Talker")
+```
+
+```{r sf-age-cdi, fig.height=4.2, fig.width=7, message = F, echo = F, warning = F, fig.cap="Supplementary Figure 1. Age by CDI Productive Vocabulary. Each infant is depicted as a single dot, with age on the x-axis and reported productive vocabulary on the MCDI, log-transformed, on the y-axis. The panels show the mispronunciation (Mispron.) and new talker studies, left and right, respectively. The color and shape of the dots indicate the age-group infants were part of (circles= 6-7mo., pluses= 8-10 mo., squares = 11-14mo.). The dark blue line and grey confidence band indicate a smoothed loess (local-estimator) fit over the data with a span of 2. Dots along the bottom represent children with a productive vocabulary of 0; these values do not contribute to the depicted line of fit but are used in the correlation analysis. Colors are for added clarity and appear in online version only. Age and vocabulary are significantly correlated, τ= .50; see main text for further details" }
+
+flickrVs_says_age_graph <- ggplot(cdi_flickrs_ds, aes(AgeMonths, log(COMP.SAY+1), color = AgeGroup3, shape = AgeGroup3))+
+  geom_point(size = 3)+geom_smooth(aes(group=1), span = 2)+theme_bw(base_size=18)+
+  xlab("Age\n (months)")+ylab("ln(Overall Production Vocabulary)")+
+  scale_x_continuous(breaks=c(6,8,10,12,14,16,18,20))+
+  facet_wrap(~study,labeller = labeller(study_label, study = study_label)) + 
+  theme_bw(base_size=18)+theme(legend.position = "none")+
+  scale_shape_manual(values = c(16,3,15))
+
+flickrVs_says_age_graph
+
+```
+
+```{r age-and-vocab, message = F, echo = F, warning = F}
+allprod_age <-
+  cor.test(cdi_flickrs_ds$COMP.SAY, cdi_flickrs_ds$AgeMonths, method = "kendall") %>%
+  tidy() %>% dplyr::select(estimate, p.value)%>%
+  mutate(value = "allprod_age")
+allcomp_age <-
+  cor.test(cdi_flickrs_ds$COMP, cdi_flickrs_ds$AgeMonths, method = "kendall") %>%
+  tidy() %>% dplyr::select(estimate, p.value)%>%
+  mutate(value = "allcomp_age")
+studyprod_age <-
+  cor.test(cdi_flickrs_ds$COMP.SAY_studywords,
+  cdi_flickrs_ds$AgeMonths,
+  method = "kendall") %>% tidy() %>% dplyr::select(estimate, p.value)%>%
+  mutate(value = "studyprod_age")
+studycomp_age <-
+  cor.test(cdi_flickrs_ds$COMP_studywords,
+  cdi_flickrs_ds$AgeMonths,
+  method = "kendall") %>% tidy() %>% dplyr::select(estimate, p.value)%>%
+  mutate(value = "studycomp_age")
+cdi_age <-rbind(allprod_age, allcomp_age, studyprod_age, studycomp_age)  
+
+
+lm1 <- lm(data = cdi_flickrs_ds, ds_mean ~ AgeMonthsCtr * study)
+lm2 <- lm(data = cdi_flickrs_ds, ds_mean ~ AgeMonthsCtr * study + COMP.SAY)
+
+prod_ix_anova <- anova(lm1, lm2, test= "Chisq")%>%tidy()
+
+
+age_dsmean_cor <- cor.test(cdi_flickrs_ds$AgeMonths, cdi_flickrs_ds$ds_mean, method = "kendall")%>%tidy()
+prod_dsmean_cor <- cor.test(cdi_flickrs_ds$COMP.SAY, cdi_flickrs_ds$ds_mean, method = "kendall")%>%tidy()
+
+```
+
+#Age and Vocabulary Effects
+
+We examined infants’ reported vocabulary on the MCDI. We analyzed four different vocabulary measures: overall comprehension, overall production, and comprehension/production for just the tested words (except ‘yogurt’ which is not on the MCDI). We conducted non-parametric correlation tests of age and vocabulary. As expected, age and vocabulary were strongly and significantly correlated across all vocabulary measures (Kendall’s τ = `r signif(min(cdi_age$estimate),2)`-`r signif(max(cdi_age$estimate),2)`, ps `r ifelse(min(cdi_age$p.value)<.0001, "<.0001", "fixme")`).
+ 
+The strongest of these correlations was between age and reported production vocabulary on the MCDI (τ= `r signif(allprod_age$estimate,2)`, p `r if_else(allprod_age$p.value<.0001,"<.0001","fixme")`); see Supplementary Figure 1. Model comparison revealed that including production vocabulary in the model described in the main text, (i.e. target looking ~ centered_age * condition) provided a better fit to the data than age and condition alone (ΔSS =`r signif(prod_ix_anova$sumsq[2],2)`; p = `r signif(prod_ix_anova$p.value[2],2)` by χ2 test.) While these variables were correlated, the variance inflation factor values (VIFS) range from `r signif(min(vif(lm2)),3)`-`r signif(max(vif(lm2)),3)`, well below the ‘rule of thumb’ for multi-collinearity concerns [conservatively, VIFS of 5 or higher; @James2013]. This pattern suggests that productive vocabulary predicts performance above and beyond infants’ age alone. Indeed, while age alone was not significantly correlated with in-lab performance (τ=`r signif(age_dsmean_cor$estimate,2)` , p=`r signif(age_dsmean_cor$p.value,2)`), productive vocabulary was significantly but weakly correlated with in-lab performance (τ=`r signif(prod_dsmean_cor$estimate,2)` , p=`r signif(prod_dsmean_cor$p.value,2)`).  See Supplementary Figure 2.  Older infants’ (predicted) lower performance on mispronounced items contributed to the weak correlations with age.
+
+ 
+ 
+```{r sf-cdi-subjmeans, comment = F, fig.height=4.2, fig.width=7, message = F, echo = F, warning = F, fig.cap="Supplementary Figure 2. Subject Means by CDI Productive Vocabulary. The left panel shows average performance for each infant in the mispronunciation (Mispron.) and new talker studies; the right panel shows infants’ performance in the New Talker condition. The x-axis indicates reported productive vocabulary on the MCDI, log-transformed. The y-axis indicates infants’ subject mean difference scores in the window of interest (367-3500ms after target onset) across item-pairs. The color of the dot indicates the age-group infants were part of (circles= 6-7mo., pluses= 8-10 mo., squares = 11-14mo.). The dark blue line and grey confidence band indicate a smoothed loess (local-estimator) fit over the data with a span of 2. Colors are for added clarity and appear in online version only. Dots along the left represent children with a productive vocabulary of 0; these values do not contribute to the line of fit but are used in the model described in the text." }
+
+flickrVs_says_ds_graph <- ggplot(cdi_flickrs_ds, aes(log(COMP.SAY+1),ds_mean, color = AgeGroup3, shape = AgeGroup3))+
+    geom_point(size=3)+geom_smooth(aes(group=1), span = 2)+theme_bw(base_size=18)+
+  xlab("ln(Overall Production Vocabulary)")+ylab("Increase in Target Looking")+
+  #scale_x_continuous(breaks=c(6,8,10,12,14,16,18,20))+
+  facet_wrap(~study,labeller = labeller(study_label, study = study_label)) + 
+  theme_bw(base_size=18)+theme(legend.position = "none")+
+  scale_shape_manual(values = c(16,3,15))
+flickrVs_says_ds_graph
+```
+
+```{r demo, echo = F, results = "hide"}
+#putting tables here for those who are curious, but not printing from them into stats below.
+mat_ed <- flickrvs_demo %>%
+  filter(final_sample =="Y")%>%
+  group_by(MaternalEducation)%>%
+  tally()
+
+ethnicity <- flickrvs_demo %>%
+  filter(final_sample =="Y")%>%
+  group_by(Ethnicity)%>%
+  tally()
+
+
+```
+
+##Sample Demographics
+Infants’ mothers (n=188) fell into the following education categories: less than high school degree (7), high school degree (20), some college (37), college degree (48) advanced degree (72) and undisclosed (4). Mothers identified their child as belonging to the following racial categories: White (97), African American (66), Asian (4), American Indian (1), Hispanic (1), other (1); the remaining families selected multiple categories (16) or chose not to respond (2).
+
+```{r scene-trial-models, echo = F, message = F}
+mod_data_noorig_gr <- flickrvs_gr_subj%>%
+  filter(study!="orig")%>%
+  ungroup()%>%
+  mutate(AgeMonthsCtr = AgeMonths - mean(AgeMonths))
+mod_data_gr <- flickrvs_gr_subj%>%
+  ungroup()%>%
+  mutate(AgeMonthsCtr = AgeMonths - mean(AgeMonths))
+
+#grouped mods, no orig
+grregmod_noorig <- lm(data = mod_data_noorig_gr, groupedmean_prop ~ groupedmean_pre + AgeMonthsCtr + study)
+grregmod_noorig_ix <- lm(data = mod_data_noorig_gr, groupedmean_prop ~ groupedmean_pre + study * AgeMonthsCtr)
+#summary(grregmod_noorig_ix)
+#anova(grregmod_noorig_ix)
+#etasq(grregmod_noorig_ix)
+ixtestchisq_noorig <- anova(grregmod_noorig, grregmod_noorig_ix, test = "Chisq")%>%tidy()
+
+
+anova_grregmod_noorig_ix_temp <- anova(grregmod_noorig_ix)%>%tidy()
+anova_grregmod_ix_noorig <- etasq(grregmod_noorig_ix)%>%
+  mutate(term = rownames(.))%>%
+  dplyr::rename(partial.etasq = `Partial eta^2`)%>%
+  left_join(anova_grregmod_noorig_ix_temp)
+
+preTterm_anova_grregmod_ix_noorig <-filter(anova_grregmod_ix_noorig, term =="groupedmean_pre")
+ageterm_anova_grregmod_ix_noorig <-filter(anova_grregmod_ix_noorig, term =="AgeMonthsCtr")
+
+
+#grouped mods, with orig
+grregmod <- lm(data = mod_data_gr, groupedmean_prop ~ groupedmean_pre + AgeMonthsCtr + study)
+grregmod_ix <- lm(data = mod_data_gr, groupedmean_prop ~ groupedmean_pre + study * AgeMonthsCtr)
+#summary(grregmod_ix)
+#anova(grregmod_ix)
+#etasq(grregmod_ix)
+ixtestchisq <- anova(grregmod, grregmod_ix, test = "Chisq")%>%tidy()
+
+anova_grregmod_ix_temp <- anova(grregmod_ix)%>%tidy()
+anova_grregmod_ix <- etasq(grregmod_ix)%>%
+  mutate(term = rownames(.))%>%
+  dplyr::rename(partial.etasq = `Partial eta^2`)%>%
+  left_join(anova_grregmod_ix_temp)
+
+preTterm_anova_grregmod_ix <-filter(anova_grregmod_ix, term =="groupedmean_pre")
+ageterm_anova_grregmod_ix <-filter(anova_grregmod_ix, term =="AgeMonthsCtr")
+
+```
+
+##Scene Trial Analysis and Discussion
+
+We analyzed the scene trial data separately from the paired-picture trials. Our outcome measure on scene trials was the proportion of target looking, calculated in our window of interest (367-3500ms after target onset, “propT”) and in the period of time before the target word was said (pre-target looking, “preT”). The difference score measure used with the paired-picture trials was not possible here, due to the varying size of the interest areas within the scene images (e.g. legs are much larger than hands on an image of a person), and the sparser data (there were half as many scene trials as paired trials (16 vs. 32)). 
+
+We included in our analysis all infants included in the paired-picture analysis, and removed individual trials using the same criteria described in the main text. We first conducted an ANCOVA examining the effects of (centered) age and condition (new-talker and mispronunciation studies), along with proportion of pre-target looking (preT). There was main effect of preT (*F*(4,183) =`r signif(preTterm_anova_grregmod_ix_noorig$statistic,4)`, p=`r if_else(preTterm_anova_grregmod_ix_noorig$p.value<.0001,"<.0001","fixme")`, partial η2  = `r signif(preTterm_anova_grregmod_ix_noorig$partial.etasq,2)`, a main effect of age (*F*(4,183) =`r signif(ageterm_anova_grregmod_ix_noorig$statistic,3)`, p=`r signif(ageterm_anova_grregmod_ix_noorig$p.value,3)`, partial η2  = `r round(ageterm_anova_grregmod_ix_noorig$partial.etasq,3)`), no effect of condition, and no significant interaction (ps>.05). The model with an interaction term was not significantly better than a model without it (ΔSS= `r signif(ixtestchisq_noorig$sumsq[2],2)`; p = `r signif(ixtestchisq_noorig$p.value[2],2)`).  Thus, where infants looked before hearing the target word played a large role in where they looked after the target was labeled, and performance improved with age.	
+
+We next combined these data with the original B&S12 data [@Bergelson2012], and performed the analogous analysis, now with 3 levels of condition (original B&S12, new talker, mispronunciation). The pattern of results was the same: there was a main effect of preT (*F*(6,238) =`r round(preTterm_anova_grregmod_ix$statistic,2)`, p=`r if_else(preTterm_anova_grregmod_ix$p.value<.0001,"<.0001","fixme")`, partial η2  = `r round(preTterm_anova_grregmod_ix$partial.etasq,3)`, a main effect of age (F(6,238) =`r signif(ageterm_anova_grregmod_ix$statistic,3)`, p=`r signif(ageterm_anova_grregmod_ix$p.value,2)`, partial η2  = `r round(ageterm_anova_grregmod_ix$partial.etasq,3)`), and no effect of condition, and no interaction (ps>.05). No interaction was justified by model comparison (ΔSS=`r signif(ixtestchisq$sumsq[2],2)`; p = `r signif(ixtestchisq$p.value[2],2)`).  
+
+Given this pattern of results, we do not find it statistically justified to analyze infants’ performance within each condition, or across pairs of studies. See Supplementary Figure 3.
+	
+
+```{r sf-scenetrials, comment = F, fig.height=4.2, fig.width=7, message = F, echo = F, warning = F, fig.cap="Supplementary Figure 3. Proportion of target looking by age group. The left two panels show average performance across infants by age-group in the mispronunciation (Mispron.) and new talker studies; the right panel shows performance in B&S12 by infants in the same age-groups. The y-axis indicates the proportion of target looking in the window of interest (367-3500ms after target onset). Error-bars indicate 95% non-parametric bootstrapped confidence intervals. The horizontal line at .25 indicates one possible estimate of chance performance, given the four interest areas per scene; interest areas were not the same size (e.g. ‘feet,’ ‘hands,’ ‘face,’ and ‘legs’ in an image of a person) and thus this baseline is intended as a rough estimate."}
+
+gr_propt_justorig <- ggplot(subset(flickrvs_gr_subj, study =="orig"),
+                            aes(AgeGroup3, groupedmean_prop))+
+  stat_summary(fun.y=mean, geom="bar", position = "dodge")+
+  stat_summary(fun.data=mean_cl_boot, position = position_dodge(width=.9), color ="red")+
+  facet_wrap(~study, labeller = labeller(study_label, study = study_label))+
+  geom_hline(yintercept=.25)+
+  theme_bw(base_size=18)+
+  ylab(label = "")+ xlab("Age Group\n (months)")+
+  scale_x_discrete(breaks=c("(5.9,8]", "(8,11]", "(11,15]"),
+                      labels=c("6-7", "8-10", "11-14"))
+
+gr_propt_noorig <- ggplot(subset(flickrvs_gr_subj, study !="orig"),
+                            aes(AgeGroup3, groupedmean_prop))+
+  stat_summary(fun.y=mean, geom="bar", position = "dodge")+
+  stat_summary(fun.data=mean_cl_boot, position = position_dodge(width=.9), color ="red")+
+  facet_wrap(~study, labeller = labeller(study_label, study = study_label))+
+  geom_hline(yintercept=.25)+
+  theme_bw(base_size=18)+
+  ylab("Proportion of Target Looking")+
+  xlab("Age Group\n (months)")+#theme(axis.title.x = element_text(hjust=1))+
+  scale_x_discrete(breaks=c("(5.9,8]", "(8,11]", "(11,15]"),
+                      labels=c("6-7", "8-10", "11-14"))
+
+grouped_propt_graph <- grid.arrange(gr_propt_noorig, gr_propt_justorig, ncol = 2, 
+             widths = c(2,1))
+```
+
+While infants’ performance on scene trials did not indicate word knowledge, performance also did not differ by condition. Indeed, in B&S12, performance in these trials types was fragile: infants succeeded at above-chance rates as a group of 6-9 month olds, and in the 6-7 month old subset, over subjects, but not in the group of 8-9 month olds nor in any age subset in the items-analysis. While the majority of infants succeeded over a wider age range than we examine here, performance was especially robust from 13-21 months, which is beyond the age range used in the present study. 
+
+We feel the data here are weaker for several linguistically uninteresting reasons, related to the difficulty inherent in these more complex trials, complications in how these visually complex trials must be analyzed, and saliency issues in the scene trial materials. Given that performance in the scene trials, just as in paired-picture trials, did not differ based on whether the speaker was the infant’s mother or the experimenter, we believe that these results, though negative, provide no evidence that infants’ understanding of words for foods and body parts is diminished when these words are uttered by a new speaker. It is less clear whether performance is diminished for the mispronunciation: while the pattern of results is mixed, infants performed numerically worse in the mispronunciation condition in the eldest age-group than in the other two studies.
+
+The data from the scene trials for both new studies conditions not as strong as the data from the paired-picture trials. While the failure of infants in these trials is not problematic for our comparison with B&S12 (see main text), a more detailed discussion of these trials is still useful for a better understanding of our data, and what it implies both theoretically and methodologically for future studies.
+
+First, on theoretical grounds, it may be the case that picking out a referent among several competitors in the same semantic category is simply harder for infants than picking out a referent compared to a single competitor from another semantic domain. That is, infants may know that a ‘mouth’ is not an ‘apple’, but not that it’s not a ‘nose’, or even if they do know what the referent looks like with some specificity, seeing more complicated images, or images with more referents may make it harder for them to find the part of the picture they are looking for very easily. 
+
+Indeed, early work by Thomas et al. [@Thomas1981], found that 13-month-olds but not 11-month-olds looked longer to objects labeled by their mother that they reportedly knew, using a four-object display shelf more similar to our scene trials than our paired picture trials. While typical psycholinguistics studies with adults use a four-picture display [@Tanenhaus1995], even fully mature adult listeners have difficulty with linguistic processing when shown more crowded visual displays [@Ferreira2013;@Hanna2004]. How infants understand words in the context of complex scenes can be addressed by future experiments, which could vary number of competitors, and their degree of semantic relatedness parametrically.
+
+Several other reasons for infants’ poor performance on these trials concern problems that are not relevant to their linguistic abilities, but rather to the nature of the stimuli and analysis problems for such stimuli. For instance, as discussed in B&S12, in this age range, infants are showing increased attention to faces and eyes in particular, and thus those images garner more attention regardless of the linguistic stimulus. Moreover, even among the food images, some parts of the image draw attention more robustly than others, depending on how the items in the image are arranged, and what they are (e.g. bottles may be more interesting than spoons to infants, all else equal). Young infants in particular have difficulty disengaging from highly salient stimuli [@Frank2009].
+
+Another problem with the scene trials concerns statistical analysis. The standard analysis involves drawing areas of interest around parts of the images and asking what proportion of the time infants fixate those areas over a given time-window. This is potentially problematic for several reasons. First, proportion-of-target-looking analysis collapses a rich data set into a single proportion for each trial or item, though this is somewhat unavoidable given that the time-course analyses used with adults are less viable with infants’ much noisier data; this point is general to all infant eye-tracking research that uses such analyses. Second, in the scene trials, unlike the paired-picture trials, the areas of interest were of varying sizes given the real-life differences in size in, e.g. a spoon and a banana, or hands and legs. Third, in determining whether the proportion of looking to a target region is significant requires a comparison to ‘chance’, which is poorly defined here. With two equally sized images, as in the paired-picture trials, chance is 50%; it is much less easily quantified with interest areas of varying sizes, and all the more so for body/face images where the interest areas do not have clear boundaries. 
+	
+One way to try to solve both the saliency and analysis issues mentioned above that is common in the field is to use a ‘baseline’ proportion from the period of time before the target is labeled, that is then subtracted away from the proportion of target looking in the window of interest; this is in line with the preT predictor used here. While some sort of correction along these lines is likely appropriate and even necessary with young infants’ data, it is not clear what the nature of the relationship between the baseline and post-target period should be. The type of correction, implemented by us here as by others, may over-correct for high-saliency parts of the image. That is, if infants are already looking at the eyes 95% of the time, there is not much room for them to show increased looking after the target is named. Moreover, performing this correction requires infants to have been looking for a sufficient amount of time before the image was named, which, with fidgety infants, results in fewer trials entering the analysis. Along similar lines, the ‘difference-score’ analysis used for the paired-picture trials, in which we calculate how much more infants look at an image when it’s the target than when it’s the distracter, resulting in pair-level data (see B&S12 and main text for more details) is much harder to implement for the scene trials: it requires that infants contribute sufficient data (i.e. look for more than 1/3 of the window of interest, and look at more than one part of the image) on all four trials for a given scene image. This was often not the case, resulting in a very large number of missing cells.
+
+Finally, while this seems to paint a dire picture of these trials, we should point out that these problems disproportionately affect the younger infants: infants over 13 months showed highly robust performance on this trial-type in B&S12 (as they did on the paired-picture trials). This too could be for many possible reasons, but certainly is at least partly explained by older infants’ increased ability to disengage from salient stimuli, and to attend to the experiment to a greater degree, as well as by their better control over various aspects of language. 
+
+In conclusion, given that this is one of the first eye-tracking studies with young infants examining word comprehension using complex images [@Aslin2009], it is perhaps not altogether unexpected that many methodological questions have arisen. Given that infants’ day-to-day life is more similar to the complex scene images than the sparse paired-trials, it will be important for future work to further investigate infants’ word comprehension during complex image viewing, with the issues raised here in mind.
+
+##References

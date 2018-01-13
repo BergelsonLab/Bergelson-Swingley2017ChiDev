@@ -1,0 +1,560 @@
+---
+title: "Young Infants’ Word Comprehension Given an Unfamiliar Talker or Altered Pronunciations"
+author: "Elika Bergelson and Daniel Swingley"
+csl: apa.csl
+output:
+  html_document: default
+  bookdown::word_document2:
+    fig_caption: yes
+    reference_docx: word-styles-reference-01.docx
+  pdf_document: default
+  word_document: default
+header-includes: \setlength\parindent{24pt}
+bibliography: library02-27-17.bib
+---
+#####
+```{r file_info, echo = F}
+# Companion Data File for Bergelson & Swingley 2017, child dev
+# This is the *manuscript* rmd for
+# "Unfamiliar Talker or Altered Pronunciations"
+
+# The eyetracking data were collected from infants in Philadelphia on a Eyelink 1000+
+# The preprocessing script XX.r precedes subsequent analysis and graphs
+# The output of this pre-processing is a csv (XX.csv) 
+# This pre-processed data file then gets read in by 
+# all3flickrs_dataprep.r
+# That's where data aggregation occurs
+# This .rmd,  creates a doc output
+# Please report any problems bugs or errors to Elika Bergelson (elika.bergelson@duke.edu)
+
+#reminders for formatting
+#Figure \@ref(fig:f-design).
+#Table \@ref(tab:t-homestats)) no underscores!
+#references: [@Barrett1978;@Rescorla1980] without name[-@Huettig2005]
+#fig.height=8, fig.width=10 maps onto 4.8" tall by 6"wide in word.
+
+#list of things to fix manually: 
+#cover page, header, line/page numbers, tables (table #s), fig names
+# 2012)(phonetic: -> ;
+#Csibra (2012)). -> , 2012)
+#e^I -> remove italics
+# refs on own page, added B&A under rev
+#rost & mcmurray ref: Rost & McMurray, 2009; 2010
+# changed delle luche to 2017
+# took out issue #s in refs (shoot me now)
+
+```
+
+```{r setup, include = F}
+knitr::opts_chunk$set(
+  cache = T,  
+  fig.height = 12, 
+  fig.width = 16,
+  out.width = '.8\\linewidth' )
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(forcats)
+library(stringr)
+library(broom)
+library(bookdown)
+library(knitr)
+library(gridExtra)
+library(pander)
+library(heplots)
+options(tibble.width = Inf)
+options(scipen=999)
+
+#this gets rid of leading zeros!
+# thanks @scoa on stackoverflow you mystery person you!
+
+knit_hooks$set(inline =
+  function (x) {
+      if (is.numeric(x)) {
+          x = round(x, getOption("digits"))
+          if (x < 1 & x > -1) {
+            x = sub("0\\.","\\.",as.character(x)) 
+          }
+
+      }
+      paste(as.character(x), collapse = ", ")
+      }
+  )
+
+source(file = "all3flickrs_dataprep.R")
+study_label <- c(orig = "B&S12", vamp = "Mispron.",voice = "New Talker")
+```
+
+```{r makefig1, echo = F, include = F}
+
+fig1 <- knitr::include_graphics("Chapter4a_exp1setup.001.tiff")
+
+```
+#Abstract
+To understand spoken words, listeners must appropriately interpret co-occurring talker characteristics and speech-sound content. This ability was tested in 6–14-months-olds by measuring their looking to named food and body-part images. In the *new talker* condition (n=90), pictures were named by an unfamiliar voice; in the *mispronunciation* condition (n=98), infants’ mothers “mispronounced” the words (e.g., *nazz* for nose). 6–7-month-olds fixated target images above chance across conditions, understanding novel talkers, and mothers’ phonologically-deviant speech, equally. 11–14-months-olds also understood new talkers, but performed poorly with mispronounced speech, indicating sensitivity to phonological deviation. Between these ages performance was mixed. These findings highlight the changing roles of acoustic and phonetic variability in early word comprehension, as infants learn which variations alter meaning.  
+
+**Keywords**: spoken word comprehension; language acquisition; word learning
+---
+
+Recognizing spoken words requires interpreting highly variable auditory signals. A stranger on the phone, a kindergartener hollering from outside, and a parent whispering all sound quite different, even if they use the same words. Yet as competent language users, we recognize what such talkers say.
+
+This is not achieved by ignoring phonetic dimensions that signal talker identity. For instance, the critical acoustic resonances (F1/F2) of a man’s /o/ vowel (*“boat”*) can be identical to those in a woman’s /u/ vowel (*“boot”*), yet adults readily identify both words by both sexes [@Hillenbrand1995].  Such findings imply that listeners partition phonetic variation appropriately between talker characteristics, and speech-sounds. Listeners retrieve both talker and message.  Here, we examine how infants learn this partitioning, by testing a large, diverse sample of infants. 
+
+##Infants’ Speech and Word-form Representations
+Young infants begin learning words while still learning the phonetic categories (consonants and vowels) of their language [words: @Bergelson2012;@Tincoff1999;@Tincoff2012][phonetic categories: @Kuhl2006;@Polka1994;@Werker1984, and others].  Without robust speech-sound representations, words might be recognized based on how much they differ *acoustically* from prior tokens.  If so, talker and phonological changes might each hinder comprehension similarly. 
+
+Infants begin to show speech-sound categorization specific to their native language during the first year. That they do so using synthesized speech or unfamiliar talkers implies that infants generalize across talkers under some conditions [@Johnson2014;@Kuhl1979;@Kuhl2006;@Polka1994;@VanHeugten2012;@Werker1984, *inter alia*]. 11-month-olds also know the phonological forms of at least some words, as shown when they differentiate spoken lists of common words and slight phonological “mispronunciations” of those words [@Halle1996;@Swingley2005;@Vihman2004].  5-month-olds tested on changes to the initial sounds in their own name paint a mixed picture: French infants detected a sound-change to their name, but only for vowel-onset names; English infants did not [@Bouchon2015c;@DelleLuche2016]. These studies used unfamiliar talkers, implying that when infants successfully discriminated, they transferred their phonological knowledge into expectations for new voices. However, none of these studies measured whether there is a *cost* for this cross-voice transfer.
+
+Here, we investigated the effect of indexical and phonetic manipulations on young infants’ word *comprehension*. Over 48 trials, infants heard sentences naming one element of a visual display. Word comprehension was operationalized as gaze to the named object.  Infants as young as 6 months visually orient to named pictures when words are spoken by the infant’s mother [@Bergelson2012, hereafter B&S12]. However, previous works leaves unclear whether young infants understand words spoken by other talkers [yes: @Tincoff1999;@Tincoff2012, no: @Parise2012].
+
+Among older children, Hallé & de Boysson-Bardies’ [-@Halle1996] “intentional mispronunciation” has been used with word comprehension to evaluate children’s knowledge of phonological form [@Mani2012;@Mani2007;@Mani2010;@Swingley2000;@Yoshida2009]. These studies generally find that after age one, children look at named pictures less when labels are mispronounced (e.g. *cur* for *car*). This shows that their phonetic knowledge, as realized by an unfamiliar talker, is sufficiently detailed to match canonical forms better than slightly deviant forms. However, these experiments have not compared variation due to talker identity and variation due to phonological changes.
+
+##Present Research
+Here we examine how well infants understand words for common nouns when they are said by an experimenter (new talker condition) or when a familiar talker (their parent) deliberately mispronounces them (mispronunciation condition). The new talker condition tests the degree to which infants’ lexical representations are talker-independent. The mispronunciation condition tests infants’ word-form precision, i.e. the degree to which single phoneme deviations disrupt comprehension. We make use of B&S12’s data as a comparison case for examining newly collected data that alters talker- or phonetic characteristics. 
+
+In our mispronunciation condition, we manipulated vowels because they are generally more tightly linked with talker variation than consonants (e.g., imagine identifying someone from her [s], versus her [a]).  Furthermore, infants’ attention to vowels has been clearly demonstrated by six months, both in word-form recognition tasks [@Bouchon2015c; cf @DelleLuche2016] and native sound-category learning [@Kuhl2006;@Polka1994]. 
+
+Mature listeners recognize words spoken by unfamiliar talkers very well. Indeed, adults generally understand new talkers [@Pierrehumbert2016], though subtle hindrances can be detected [@Walker2011].  By contrast, intentional mispronunciations strongly impede word recognition in adults [@Swingley2009]. 
+
+How word recognition is tuned over the course of the first year is not clear, given the inchoate nature of the early phonology and prior demonstrations that non-phonetic modifications of word forms can prevent recognition [@Johnson2011;@Schmale2010;@Singh2004]. In principle, there are four possible patterns:  
+(1) *Phonemes over talkers* (adult pattern.) Even 6-month-olds might already weigh phonological variation over talker familiarity, recognizing new-talker words more readily than mispronounced words.  
+(2) *Overly strict variability weighting.* Infants might start out with strict matching criteria, failing to understand unfamiliar talkers or deviant pronunciations, only understanding words said in the exact manner most familiar to them.  
+(3) *Overly loose variability weighting.* Infants might begin with relatively loose criteria over both sorts of variation, succeeding in both conditions.  
+(4) *Talkers over phonemes.* Infants might show a clearly un-adult pattern, weighing talker familiarity over phonological variation. This would cause degraded performance for new talkers but not for mispronounced words.  
+
+We employed a between-subjects design with 6–14-month-olds. For each condition we asked two questions: (1) whether infants understood words with the introduced sound manipulations (talker or phonetic change), and (2) whether infants’ comprehension was worse than when the words were pronounced correctly by their mother (B&S12). 
+
+We expected that by 14 months, infants would find words spoken with the wrong vowels hard to understand relative to words spoken correctly by an unfamiliar talker [@Swingley2002b].  We did not have a prediction about when this pattern would emerge in early development.  Because our goal was to characterize a possible developmental change, we used identical procedures and materials in a large sample over a wide age range. 
+
+#Method
+##Participants.
+Subjects were 188 6–14-month-olds. We modeled age as a continuous predictor, but also split infants into three age groups for ease of comparison with other studies. Our youngest group was 6–7-month-olds, matching the youngest group examined by B&S12; our eldest group was 11–14-month-olds, whom we had reason to believe would be affected by phonological mispronunciations based on previous studies [e.g. @Swingley2002b, @Vihman2004].  While B&S12 examined 6–9-month-olds as a group, they also considered 6–7- and 8–9-month-olds separately. We use this narrower youngest group here because of increasing interest in very early lexical development [e.g. @Bouchon2015c].
+```{r, results = "hide", echo = F}
+gender_bothconditions <- flickrvs_demo %>%
+  filter(final_sample =="Y")%>%
+  group_by(gender)%>%
+  tally()%>%
+  spread(gender,n)%>%
+  mutate(propgirl = signif(F/(F+M),2)*100)
+
+```
+
+The final sample consisted of 54 6-7 month olds, 56 8-10 month olds, and 78 11-14 month olds, split approximately evenly across the new-talker and mispronunciation conditions (Table 2). Infants were recruited from the Philadelphia area by mail, e-mail, phone, and in person. All children were carried full-term (>34 weeks), and heard 75% or more English at home. None had chronic ear infections. `r gender_bothconditions$propgirl`% were girls. An additional 12 infants were tested, but were excluded from the final sample for the following reasons: technical problems (n=3), hearing <75% English at home (n=6), premature birth status (n=3), age outside of tested range (n=3). Finally, 79 infants were excluded for not contributing data to at least half of item-pairs tested (46 in the new-talker condition, 33 in the mispronunciation condition). For this last criterion, we first removed trials in which infants i) failed to look at both displayed images; ii) failed to look at either image for more than 1/3 of the window of interest; iii) were crying or screaming during the target sentence. We removed trials in which i) parents failed to say the target word as intended  ii) parents pointed to a specific part of the screen while peeking under the visor or iii) experimenters failed to log a key-press when the target was said. Such events tended to co-occur in trials where infants misbehaved.
+
+Parents gave written informed consent on behalf of their infant. Maternal education and race information is available in the Supplemental Information. 
+
+##Materials
+Visual materials were identical to those in B&S12. There were 48 test trials, split into two interspersed trial types, along with colorful 2s attention-getters between every eight test trials. On *paired-picture* trials (n=32), infants saw two images, one food-related item and one body-part, against a grey background. Each image was 16.9cm x 12.7cm, placed on the left or right side of the screen. On *scene* trials (n=16) infants saw a scene of food-related items (one of two different tabletops with four food items on each) or a person (an image of a whole body, or just the face). These images varied slightly in height and width, and were presented in the center of the screen. While the paired-picture trials are standard in the field (Fernald, Pinto, Swingley, Weinberg, & McRoberts, 1998), the scene trials were a novel addition in B&S12; they were retained in the current study so that the only change from the previous experiment would be the talker and pronunciation changes. 
+
+In the new-talker condition, auditory materials were identical to B&S12 except that the (female) experimenter produced the utterances instead of the infant’s mother (Table 1). In the mispronunciation condition, 6.1% of infants heard the words from their father rather than their mother (in B&S12 it was 7.5%; we use ‘mother’ hereafter). In the mispronunciation condition, each noun was deliberately mispronounced by the mother with a change in the stressed vowel. The vowel shift was maximally different from the original vowel, did not create a real word known to infants, and was not similar to the vowel in any competitor words displayed simultaneously. See Table 1. 
+
+Original  | Mispronunciation [IPA transcription] 
+----------| ------------------------------------
+apple     | opal  [opəl]
+banana    | banoona [bənunə]
+bottle    | biddle [bɪdɪ̩l]
+cookie    | khaki [kɑki]
+juice     | jouse [dʒaʊs]
+milk      | mulk [məlk]
+spoon     | spoan [spon]
+yogurt    | yaygurt [j$e^I$gərt]
+ear	      | or [ɔr]
+eyes      | ayes [ez]
+face      | fouse [faʊws]
+foot/feet | foat [fot]
+hair      | har [hɑr]
+hand/hands| hund/s [hənd/z]
+leg/legs  | loog/s  [lug/z]
+mouth     | mith [mɪθ]
+nose	    | nazz [næz]
+
+
+Table 1. Word stimuli. ‘Original’ indicates the word in B&S12, and the new-talker condition. ‘Mispronunciation’ reflects the pronunciation of that same word in the mispronunciation condition, with International Phonetic Alphabet  notation in brackets. 
+
+##Apparatus and procedure.
+After completing paperwork, which included the long-form Words and Gestures version of the Macarthur-Bates Development Inventory [MCDI; @Dale1996] and an optional demographic questionnaire, parents and infants were seated in front of a computer display (a 34.7 x 26.0 cm LCD 75dpi screen) in a dimly-lit room.  In both conditions (as in B&S12), the talker wore headphones over which she heard a sentence prompt which she repeated to the child. Mothers wore an opaque visor; they could see their child but not the display screen. In the new-talker condition, an experimenter wore the headphones and repeated the sentence aloud to the child, from behind the experimenter’s computer; infants remained in mothers’ laps (Figure 1).
+
+In the mispronunciation condition, mothers deliberately mispronounced the target items, repeating what they heard in their headphones. Before the experiment mothers listened to the target words (with no carrier phrase) over closed-ear headphones in the lab’s waiting room. While listening, they saw a list written out in a phonetically-transparent way (see Table 1), along with a ‘sounds like’ aid, e.g. for the mispronunciation of ‘nose’ they saw ‘nazz, rhymes with jazz’. Mothers did not see the original word (to help prevent accidental correct pronunciations during testing). Occasionally, during the experiment mothers mispronounced the mispronunciation. Based on experimenter notes and review of the session’s video footage, we removed trials in which mother’s mispronunciation a) lacked the initial consonant (e.g. “ouse” for “fouse” (face), b) resulted in a phonetic change larger than the intended change (e.g. “hines” for “hunds”, hands) or c) turned the word into a word infants might know (e.g. “more” for “oar” (ear). This resulted in 45 trials being removed across 30 babies.  In the new talker condition, the experimenter was a native English-speaking female researcher; she did not mispronounce target words. The experimental setup and structure were identical to that in B&S12, except the auditory materials.
+
+
+
+```{r f-experimenter-design,  echo = F, fig.cap="Experimental setup, new-talker condition. Infants sat in mothers’ laps; an experimenter sat behind a second computer. The experimenter heard sentence prompts over headphones that she repeated to the child. Mothers wore a visor; they could not see the displayed images. The setup for the mispronunciation condition and B&S12 was identical, except the mother wore the headphones."}
+fig1
+
+```
+
+#Results
+We analyze separately the results from each age group and trial-type (paired-picture and scene trials), using the same approach described in B&S12. Fixation results on paired-picture trials underwent a difference score analysis, which considered the proportion of time (over the 367-3500ms window of interest) infants looked at an image when it was the target versus when it was the distracter. This measures whether infants recognized words in each pair, controlling for infants’ picture preferences. For scene trials, the outcome measure was the proportion of target looking, corrected for baseline looking via subtraction, over the 367-3500ms window of interest. The present criteria for subject and trial inclusion (see ‘Participants’ section above) were retroactively applied to B&S12, so that the samples compared below were the result of the same selection process; 57 infants from B&S12 are included for cross-study analyses here (Table 2). 
+
+Given added analytic complexities in the analysis of the scene trials, which were retained to maximally equate the present study design with B&S12, we present those results in the Supplementary Materials, focusing here on the more standard paired-picture trials [@Fernald1998;@Fernald2008]. All raw anonymized data and an R script showing how statistics and analyses were generated are available on the first author’s website.
+
+```{r ancova-age-study, echo = F, warning = F, error = F, message = F}
+mod_data_noorig <- flickr_ds_all3%>%
+  filter(numpairs>3 & study!="orig")%>%
+  ungroup()%>%
+  mutate(AgeMonthsCtr = AgeMonths - mean(AgeMonths))
+
+mod_data <- flickr_ds_all3%>%
+  filter(numpairs>3 )%>%
+  ungroup()%>%
+  mutate(AgeMonthsCtr = AgeMonths - mean(AgeMonths))
+
+regmod_noorig <- lm(data = mod_data_noorig, ds_mean ~ AgeMonthsCtr + study)
+regmod_noorig_ix <- lm(data = mod_data_noorig, ds_mean ~ AgeMonthsCtr * study)
+
+glance_regmod_noorig_ix <- glance(regmod_noorig_ix)
+ix_model_comparison_noorig <- anova(regmod_noorig, regmod_noorig_ix, test= "Chisq")%>%tidy()
+anova_regmod_noorig_ix_temp <- anova(regmod_noorig_ix)%>%tidy()
+anova_regmod_noorig_ix <- etasq(regmod_noorig_ix)%>%
+  mutate(term = rownames(.))%>%
+  dplyr::rename(partial.etasq = `Partial eta^2`)%>%
+  left_join(anova_regmod_noorig_ix_temp)
+
+studyterm_anova_regmod_noorig_ix <- filter(anova_regmod_noorig_ix, term == "study")
+ixterm_anova_regmod_noorig_ix <- filter(anova_regmod_noorig_ix, term == "AgeMonthsCtr:study")
+
+#summary(regmod_noorig)
+#anova(regmod_noorig)
+#summary(regmod_noorig_ix)%>%tidy() # interaction significant
+#anova(regmod_noorig_ix, regmod_noorig, test= "Chisq")
+#anova(regmod_noorig_ix)%>%tidy()
+#plot(regmod_noorig_ix)
+
+
+regmod <- lm(data = mod_data, ds_mean ~ AgeMonthsCtr + study)
+regmod_ix <- lm(data = mod_data, ds_mean ~ AgeMonthsCtr * study)
+
+glance_regmod_ix <- glance(regmod_ix)
+ix_model_comparison <- tidy(anova(regmod, regmod_ix, test = "Chisq"))# no ix justified
+anova_regmod_ix_temp <- anova(regmod_ix)%>%tidy()
+anova_regmod_ix <- etasq(regmod_ix)%>%
+  mutate(term = rownames(.))%>%
+  dplyr::rename(partial.etasq = `Partial eta^2`)%>%
+  left_join(anova_regmod_ix_temp)
+
+ixterm_anova_regmod_ix <-filter(anova_regmod_ix, term =="AgeMonthsCtr:study")
+studyterm_anova_regmod_ix <-filter(anova_regmod_ix, term =="study")
+ageterm_anova_regmod_ix <-filter(anova_regmod_ix, term =="AgeMonthsCtr")
+
+
+```
+
+
+##Analysis of Covariance For Age & Study
+###New talker and mispronunciation conditions.
+A two-way ANCOVA testing for an interaction between (centered) age as a continuous predictor, and condition (new-talker, mispronunciation) accounted for a significant proportion of variance (adj. $R^2$=`r round(glance_regmod_noorig_ix$adj.r.squared,3)`, *F*(3,184)=`r round(glance_regmod_noorig_ix$statistic,2)`,  p=`r round(glance_regmod_noorig_ix$p.value,3)`). There was no main effect of age, a marginal effect of condition (new talker > mispronunciation; *F*(3,184) =`r round(studyterm_anova_regmod_noorig_ix$statistic,2)`, p=`r round(studyterm_anova_regmod_noorig_ix$p.value,3)`, partial η2  = `r round(studyterm_anova_regmod_noorig_ix$partial.etasq,3)`), and a significant interaction: infants in the new-talker condition performed better as age increased (F(3, 184) =`r round(ixterm_anova_regmod_noorig_ix$statistic,2)`, p=`r round(ixterm_anova_regmod_noorig_ix$p.value,3)`, partial η2  = `r round(ixterm_anova_regmod_noorig_ix$partial.etasq,3)`).  Inclusion of an interaction term was justified by model comparison (ΔSS = `r round(ix_model_comparison_noorig$sumsq[2],3)`; p = `r round(ix_model_comparison_noorig$p.value[2],3)` by χ2 test).  Thus, there were developmental differences in how children responded to talker changes and mispronunciations. We also found that age and vocabulary were strongly and significantly correlated across all vocabulary measures; see Supplemental Information for details.
+
+###Comparison with B&S12.
+We next combined our new results with the original B&S12 data, and performed the same analysis, now with three levels of ‘condition’ (original B&S12, new talker, mispronunciation). The overall model accounted for a significant proportion of variance (adj. $R^2$=`r round(glance_regmod_ix$adj.r.squared,3)`, *F*(3,184)=`r round(glance_regmod_ix$statistic,2)`,  p=`r round(glance_regmod_ix$p.value,4)`). Here, a condition X age interaction was not justified by model comparison (p = `r round(ix_model_comparison$p.value[2],3)`), nor was such an interaction significant when included (`r round(ixterm_anova_regmod_ix$p.value,3)` by χ2 test). We found a main effect of condition (*F*(5, 239) = `r round(studyterm_anova_regmod_ix$statistic,2)`, p=`r round(studyterm_anova_regmod_ix$p.value,4)`, partial η2  = `r round(studyterm_anova_regmod_ix$partial.etasq,3)`), and a marginal effect of (centered) age (*F*(5, 239) = `r round(ageterm_anova_regmod_ix$statistic,2)`, p=`r round(ageterm_anova_regmod_ix$p.value,3)`, partial η2  = `r round(ageterm_anova_regmod_ix$partial.etasq,3)`).  
+
+```{r table2,  echo = F, warning = F, error = F, message = F}
+kw_Ss <- flickr_ds_all3%>%
+  filter(numpairs>3)%>%
+  group_by(AgeGroup3)%>%
+  summarise(kw_est = kruskal.test(ds_mean,study)$statistic,
+            kw_pval = kruskal.test(ds_mean,study)$p.value)
+
+kw_pairs <- flickr_ds_pairs%>%
+  group_by(AgeGroup3)%>%
+  summarise(kw_est = kruskal.test(pair_agebin_ds,study)$statistic,
+            kw_pval = kruskal.test(pair_agebin_ds,study)$p.value)
+
+flickrall3_Ss_proppos_ks <- flickr_ds_all3%>%
+  filter(numpairs>3)%>%
+  group_by(AgeGroup3, study)%>%
+  summarise(numpos = sum(ds_mean>0),
+            numneg = sum(ds_mean<=0),
+            n = length(ds_mean),
+            proppos = paste(numpos,"/", n, " (", signif(numpos/n,digits=3)*100,"%)", sep = ""))%>%
+  dplyr::select(-numpos, -numneg, -n)%>%
+  spread(study, proppos)%>%
+  left_join(kw_Ss)%>%
+  mutate(kwstats = paste(signif(kw_est,2), "(", signif(kw_pval, 2), ")", sep = ""),
+         unit = "Subjects")%>%
+  dplyr::select(-kw_est, -kw_pval)
+
+flickrall3_pairs_proppos_ks <- flickr_ds_pairs%>%
+  group_by(AgeGroup3, study)%>%
+  summarise(numpos = sum(pair_agebin_ds>0),
+            numneg = sum(pair_agebin_ds<=0),
+            n = length(pair_agebin_ds),
+            proppos = paste(numpos,"/", n, sep = ""))%>%
+  dplyr::select(-numpos, -numneg, -n)%>%
+  spread(study, proppos)%>%
+  left_join(kw_pairs)%>%
+  mutate(kwstats = paste(signif(kw_est,2), "(", signif(kw_pval, 2), ")", sep = ""),
+         unit = "Item-pairs")%>%
+  dplyr::select(-kw_est, -kw_pval)
+
+table2 <- rbind(flickrall3_pairs_proppos_ks,flickrall3_Ss_proppos_ks)%>%
+  arrange(AgeGroup3,desc(unit))%>%
+  dplyr::select(AgeGroup3, unit, everything())%>%
+  kable(col.names = c("Age Group (months)","Unit", "Original","Mispron.","New talker","K-Wχ2(p-val)"), caption = "Table 2. Performance by condition and age-group. “Original” refers to B&S12, where mothers pronounced words correctly.  Columns 2-4 indicate how many participants (or item pairs) had positive means, over the total number of participants (item pairs.) Column 5 indicates the Kruskall-Wallis test outcome, testing for condition effects. Only the oldest age group (bottom row) showed evidence for condition differences in this test." )
+
+
+table2
+
+```
+
+##Analysis by Age-Group
+We next considered each age-group separately (see Figures 2–4). First we analyzed subject means and item-pair means in the current experiment against chance using two-tailed Wilcoxon tests. Next, combining with the B&S12 data, we ran Kruskal-Wallis tests to see whether there were differences among the three conditions. Finally, we examined all pair-wise comparisons among conditions using two-tailed Wilcoxon tests (two-sample, or paired). 
+ 
+```{r six-seven-stats, echo = F, warning = F, error = F, message = F, results = "hide"}
+Ss67voice <-
+  flickr_ds_all3 %>% filter(study == "voice", AgeGroup3 == "(5.9,8]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+
+Ss67vamp <-
+  flickr_ds_all3 %>% filter(study == "vamp", AgeGroup3 == "(5.9,8]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+
+Ss67new <-
+  flickr_ds_all3 %>% filter(study != "orig", AgeGroup3 == "(5.9,8]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+
+Ss67all <-
+  flickr_ds_all3 %>% filter(AgeGroup3 == "(5.9,8]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+  
+
+onesamp_npstats(subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]" )$pair_agebin_ds)# grouped by study, so 24 'pairs', 8 for each study
+onesamp_npstats(subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]" & study!="orig")$pair_agebin_ds)
+kwtest_Ss67 <- kruskal.test(data=subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"), pair_agebin_ds ~ factor(study))%>%tidy()
+
+wilcox.test(subset(flickr_ds_all3,  AgeMonths<=8  &numpairs>3 & study=="voice")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths<=8  &numpairs>3 & study=="vamp")$ds_mean, conf.int=T)
+wilcox.test(subset(flickr_ds_all3,  AgeMonths<=8  &numpairs>3 & study=="voice")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths<=8  &numpairs>3 & study=="orig")$ds_mean, conf.int=T)
+wilcox.test(subset(flickr_ds_all3,  AgeMonths<=8  &numpairs>3 & study=="orig")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths<=8  &numpairs>3 & study=="vamp")$ds_mean, conf.int=T)
+
+#6-7s Items
+wilcox.test(subset(flickr_ds_pairs, AgeGroup3=="(5.9,8]"  & study=="voice")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"  & study=="vamp")$pair_agebin_ds, paired = T, conf.int=T)
+wilcox.test(subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"  & study=="voice")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"  & study=="orig")$pair_agebin_ds, paired = T, conf.int=T)
+wilcox.test(subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"  & study=="orig")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"  & study=="vamp")$pair_agebin_ds, paired = T, conf.int=T)
+kwtest_pairs67 <- kruskal.test(data=subset(flickr_ds_pairs,  AgeGroup3=="(5.9,8]"), pair_agebin_ds ~ factor(study))%>%tidy
+
+```
+###6–7-month-olds.
+Across new-talker and mispronunciation conditions, the 6–7-month-olds looked at the named image at above chance rates. `r Ss67new$proppos` infants attained positive mean difference-scores (M = `r Ss67new$m%>%signif(.,2)`, SD =`r Ss67new$sd%>%signif(.,2)`; p`r ifelse(Ss67new$binomp<.05 & Ss67new$wilcox_p<.05, "<.05", ">.05")` by binomial and Wilcoxon test; patterns of significance were equivalent over item-pairs. See Table 2.) While most infants showed positive performance for most pairs (Table 2), subject- and item-pair means in each condition taken individually did not differ from chance (New-Talker $M_{6-7Ss}$=`r Ss67voice$m%>%signif(.,2)`,SD = `r Ss67voice$sd%>%signif(.,2)`; Mispronunciation $M_{6-7Ss}$=`r Ss67vamp$m%>%signif(.,2)`, SD = `r Ss67vamp$sd%>%signif(.,2)`; ps`r ifelse(Ss67voice$wilcox_p<.05 & Ss67vamp$wilcox_p<.05, "<.05", ">.05")`)
+
+
+While difference-scores over the whole sample were not normally distributed, the 6-7 month subject means did not differ from a normal distribution by Shapiro test (each p`r ifelse(Ss67voice$shap_p<.05 & Ss67voice$shap_p<.05, "<.05", ">.05")`). Given this, and our directional hypothesis that infants would either look more at the target image, or show no preference for either image, we also conducted one-tailed t-tests on looking scores in each condition. These tests show above-chance performance for the 6–7-month-olds in each condition (each *M*=`r if_else(round((Ss67voice$m),2)==.04 & round((Ss67vamp$m),2)==.04,".04","fixthis")`, p `r ifelse(Ss67voice$otT_p<.05 & Ss67vamp$otT_p<.05, "<.05", ">.05")`).
+
+Considering all three conditions, Kruskall-Wallis Test and pair-wise comparisons over subject means and item-pair means indicated no significant differences across any pair of conditions (all ps>.16 by Wilcoxon Test). This pattern suggests that 6–7-month-olds recognized words equally whether said by their mother or another woman, or whether pronounced correctly or with a changed vowel.  Performance at this age was modest but consistent, likely reflecting the somewhat fragile nature of very early word comprehension. 
+
+```{r eight-ten-stats, echo = F, warning = F, error = F, message = F, results = "hide"}
+##8-10.9s  
+Ss810voice <-
+  flickr_ds_all3 %>% filter(study == "voice", AgeGroup3 == "(8,11]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+
+Ss810vamp <-
+  flickr_ds_all3 %>% filter(study == "vamp", AgeGroup3 == "(8,11]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+
+Ss810new <-
+  flickr_ds_all3 %>% filter(study != "orig", AgeGroup3 == "(8,11]" &
+  numpairs > 3) %>% ungroup() %>% dplyr::select(ds_mean) %>% unlist() %>% onesamp_npstats()
+  Ss810all <- flickr_ds_all3%>% filter( AgeGroup3=="(8,11]" & numpairs>3)%>%ungroup()%>%dplyr::select(ds_mean)%>%unlist()%>%onesamp_npstats()
+
+
+onesamp_npstats(subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3)$ds_mean)
+onesamp_npstats(subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study!="orig")$ds_mean)
+
+kwtest_Ss810 <- kruskal.test(data=subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3), ds_mean ~ factor(study))%>%tidy()
+
+voice_vamp_810Ss<-wilcox.test(subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study=="voice")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study=="vamp")$ds_mean, conf.int = T)%>%
+  tidy()
+
+voice_orig_810Ss<-wilcox.test(subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study=="voice")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study=="orig")$ds_mean, conf.int = T)%>%
+  tidy()
+
+orig_vamp_810Ss<-wilcox.test(subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study=="orig")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths>8 & AgeMonths<=11  &numpairs>3 & study=="vamp")$ds_mean, conf.int = T)%>%
+  tidy()
+
+
+##8-10.9s items  
+onesamp_npstats(subset(flickr_ds_pairs,  AgeGroup3=="(8,11]" )$pair_agebin_ds)
+onesamp_npstats(subset(flickr_ds_pairs,  AgeGroup3=="(8,11]" & study!="orig")$pair_agebin_ds)
+
+
+kwtest_pairs810 <- kruskal.test(data=subset(flickr_ds_pairs,  AgeGroup3=="(8,11]"), pair_agebin_ds ~ factor(study))%>%tidy()
+
+voice_vamp_810pairs <- wilcox.test(subset(flickr_ds_pairs, AgeGroup3=="(8,11]"  & study=="voice")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(8,11]"  & study=="vamp")$pair_agebin_ds,  paired = T, conf.int=T)%>%
+  tidy()
+
+voice_orig_810pairs <- wilcox.test(subset(flickr_ds_pairs,  AgeGroup3=="(8,11]"  & study=="voice")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(8,11]"  & study=="orig")$pair_agebin_ds,  paired = T, conf.int=T)%>%
+  tidy()
+
+orig_vamp_810pairs <- wilcox.test(subset(flickr_ds_pairs,  AgeGroup3=="(8,11]"  & study=="orig")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(8,11]"  & study=="vamp")$pair_agebin_ds, paired = T, conf.int=T)%>%
+  tidy()
+
+```
+
+```{r}
+
+```
+
+###8–10-month-olds.
+The 8–10-month-olds showed surprisingly poor performance in the current study. Collapsing conditions, `r Ss810new$proppos` infants attained positive mean difference-scores (M=`r Ss810new$m%>%signif(.,2)`, SD = `r Ss810new$sd%>%signif(.,2)`, p`r ifelse(Ss810new$wilcox_p>.05,">.05","<.05")`). After pooling with the B&S12 data, a Kruskall-Wallis test revealed no significant effect of condition over subjects or item-pairs. Over subjects, two-sample Wilcoxon tests indicated poorer performance in each new condition than in the original study (B&S12>New-talker, estimated difference =`r abs(voice_orig_810Ss$estimate)%>%signif(.,2)`, p=`r voice_orig_810Ss$p.value%>%signif(.,2)`; B&S12>mispronunciation, estimated difference = `r abs(orig_vamp_810Ss$estimate)%>%signif(.,2)`, p=`r orig_vamp_810Ss$p.value%>%signif(.,2)`), and no difference between the two new conditions (New-Talker $M_{8-10Ss}$=`r Ss810voice$m%>%signif(.,2)`, SD = `r Ss810voice$sd%>%signif(.,2)`; Mispronunciation $M_{8-10Ss}$=`r Ss810vamp$m%>%signif(.,2)`, SD = `r Ss810vamp$sd%>%signif(.,2)`; p `r ifelse(voice_vamp_810Ss$p.value>.05,">.05","<.05")`). Over item-pairs, performance between the original study and mispronunciation condition differed significantly by Wilcoxon Test (B&S12>Mispronunciation; estimated difference = `r abs(orig_vamp_810pairs$estimate)%>%signif(.,2)`, p=`r orig_vamp_810pairs$p.value%>%signif(.,2)`), but not the original and new-talker or new-talker and mispronunciation conditions, p`r ifelse(voice_vamp_810pairs$p.value>.05 & voice_orig_810pairs$p.value>.05,">.05","fixthis")`. Infants in this age group struggled in the present study; we return to this in the discussion.
+
+```{r eleven-fourteen-stats, echo = F, warning = F, error = F, message = F, results = "hide"}
+Ss1115voice <- flickr_ds_all3%>% filter(study=="voice", AgeGroup3=="(11,15]" & numpairs>3)%>%ungroup()%>%dplyr::select(ds_mean)%>%unlist()%>%onesamp_npstats()
+Ss1115vamp <- flickr_ds_all3%>% filter(study=="vamp", AgeGroup3=="(11,15]" & numpairs>3)%>%ungroup()%>%dplyr::select(ds_mean)%>%unlist()%>%onesamp_npstats()
+Ss1115new <- flickr_ds_all3%>% filter(study!="orig", AgeGroup3=="(11,15]" & numpairs>3)%>%ungroup()%>%dplyr::select(ds_mean)%>%unlist()%>%onesamp_npstats()
+Ss1115all <- flickr_ds_all3%>% filter( AgeGroup3=="(11,15]" & numpairs>3)%>%ungroup()%>%dplyr::select(ds_mean)%>%unlist()%>%onesamp_npstats()
+
+
+kwtest_Ss1115<-kruskal.test(data=subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3), ds_mean ~ factor(study))%>%tidy()
+
+
+voice_vamp_1115Ss <- wilcox.test(subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3 & study=="voice")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3 & study=="vamp")$ds_mean, conf.int=T)%>%
+  tidy()
+
+orig_vamp_1115Ss <- wilcox.test(subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3 & study=="orig")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3 & study=="vamp")$ds_mean, conf.int=T)%>%
+  tidy()
+
+voice_orig_1115Ss <- wilcox.test(subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3 & study=="voice")$ds_mean,
+            subset(flickr_ds_all3,  AgeMonths>=11  &numpairs>3 & study=="orig")$ds_mean, conf.int=T)%>%
+  tidy()
+
+pairs1115voice <- flickr_ds_pairs %>%filter(study=="voice" & AgeGroup3=="(11,15]")%>%ungroup()%>%dplyr::select(pair_agebin_ds)%>%unlist()%>%onesamp_npstats()
+pairs1115vamp <- flickr_ds_pairs %>%filter(study=="vamp" & AgeGroup3=="(11,15]")%>%ungroup()%>%dplyr::select(pair_agebin_ds)%>%unlist()%>%onesamp_npstats()
+
+onesamp_npstats(subset(flickr_ds_pairs,  AgeGroup3=="(11,15]" )$pair_agebin_ds)
+onesamp_npstats(subset(flickr_ds_pairs,  AgeGroup3=="(11,15]" & study!="orig")$pair_agebin_ds)
+
+kwtest_pairs1115 <- kruskal.test(data=subset(flickr_ds_pairs,  AgeGroup3=="(11,15]"), pair_agebin_ds ~ factor(study))%>%tidy()
+
+wilcox.test(subset(flickr_ds_pairs, AgeGroup3=="(11,15]"  & study=="voice")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(11,15]"  & study=="vamp")$pair_agebin_ds,  paired = T, conf.int=T)
+wilcox.test(subset(flickr_ds_pairs,  AgeGroup3=="(11,15]"  & study=="voice")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(11,15]"  & study=="orig")$pair_agebin_ds,  paired = T, conf.int=T)
+wilcox.test(subset(flickr_ds_pairs,  AgeGroup3=="(11,15]"  & study=="orig")$pair_agebin_ds,
+            subset(flickr_ds_pairs,  AgeGroup3=="(11,15]"  & study=="vamp")$pair_agebin_ds,  paired = T, conf.int=T)
+```
+
+
+###11–14-month-olds.
+Finally, the 11–14-month-olds showed the overall pattern across conditions that would be expected from mature listeners. Collapsing over the two new conditions, `r Ss1115new$proppos` infants attained positive mean difference-scores (M= `r Ss1115new$m%>%signif(.,2)`, SD= `r Ss1115new$sd%>%signif(.,2)`, p= `r ifelse((Ss1115new$wilcox_p)<.001,"<.001")`). This strong performance was driven by the infants in the new-talker condition: `r pairs1115voice$proppos` pair-means and `r Ss1115voice$proppos` subject-means were positive in this condition; performance in this condition alone was significant by Wilcoxon and binomial test (New-Talker $M_{11-14Ss}$= `r Ss1115voice$m%>%signif(.,2)`, SD= `r Ss1115voice$sd%>%signif(.,2)`, p= `r ifelse((Ss1115voice$wilcox_p)<.001,"<.001","fixme")`). In contrast, `r pairs1115vamp$proppos` pair-means and only `r Ss1115vamp$proppos` subject-means were positive in the mispronunciation condition (Mispronunciation $M_{11-14Ss}$=`r Ss1115vamp$m`, SD= `r Ss1115vamp$sd`, p= `r ifelse((Ss1115vamp$wilcox_p)<.001,"<.001",(Ss1115vamp$wilcox_p))`).  Combining with the B&S12 data, a Kruskall-Wallis test indicated a significant difference across the three conditions (Kruskall-Wallis χ2=`r kwtest_pairs1115$statistic%>%signif(.,2)`, p =`r kwtest_pairs1115$p.value%>%signif(.,2)`).  Infants’ performance in B&S12 and the new-talker condition were each significantly higher than in the mispronunciation condition, across both subjects and item-pairs (B&S12>Mispronunciation: estimated difference = `r abs((orig_vamp_1115Ss$estimate))%>%signif(.,2)`; p=`r orig_vamp_1115Ss$p.value%>%signif(.,2)`) by Wilcoxon Test; New-talker>Mispronunciation: estimated difference = `r abs((voice_vamp_1115Ss$estimate))%>%signif(.,2)`; p=`r voice_vamp_1115Ss$p.value%>%signif(.,2)`); B&S12 and New-Talker did not differ significantly, p=`r voice_orig_1115Ss$p.value%>%signif(.,2)`). See figures 2-4. 
+
+```{r f-agegroups, comment = F, fig.height=4.2, fig.width=7, message = F, echo = F, warning = F, fig.cap="Increase in target looking by age-group and condition. The panels show average average performance across infants by age-group in the mispronunciation condition, new-talker condition, and B&S12, left to right. The y-axis indicates infants’ subject-mean difference scores in the 367—3500 window of interest across item-pairs; error-bars are 95% nonparametric bootstrapped CIs." }
+flickrVs_ds_noorig <- ggplot(subset(flickr_ds_all3, numpairs>3 & study!="orig"), aes(AgeGroup3, ds_mean))+
+  stat_summary(fun.y=mean, geom="bar", position = "dodge")+
+  stat_summary(fun.data=mean_cl_boot, position = position_dodge(width=.9), color ="red")+
+  facet_wrap(~study, labeller = labeller(study_label, study = study_label))+
+  geom_hline(yintercept=0)+coord_cartesian(ylim=c(-.05,.2))+
+  theme_bw(base_size=18)+
+  ylab(label = "Increase in Target Looking")+ xlab("Age Group\n (months)")+
+  scale_x_discrete(breaks=c("(5.9,8]", "(8,11]", "(11,15]"),
+                      labels=c("6-7", "8-10", "11-14"))
+
+flickrVs_ds_justorig <- ggplot(subset(flickr_ds_all3, numpairs>3 & study=="orig"), aes(AgeGroup3, ds_mean))+
+  stat_summary(fun.y=mean, geom="bar", position = "dodge")+
+  stat_summary(fun.data=mean_cl_boot, position = position_dodge(width=.9), color ="red")+
+  facet_wrap(~study, labeller = labeller(study_label, study = study_label))+
+  geom_hline(yintercept=0)+coord_cartesian(ylim=c(-.05,.2))+
+  theme_bw(base_size=18)+
+  ylab(label = "")+ xlab("Age Group\n (months)")+
+  scale_x_discrete(breaks=c("(5.9,8]", "(8,11]", "(11,15]"),
+                      labels=c("6-7", "8-10", "11-14"))
+
+
+flickrVs_ds_graph <- grid.arrange(flickrVs_ds_noorig, flickrVs_ds_justorig, ncol = 2, 
+             widths = c(1.7,1))
+
+```
+
+```{r f-pairs, comment = F, fig.height=4.75, fig.width=9.5, message = F, echo = F, warning = F, fig.cap="Increase in target looking across item-pairs, age-groups and conditions. The panels show average performance in each age-group for each item-pair in the mispronunciation condition, new-talker condition, and B&S12, left to right. The y-axis indicates mean difference scores for a given age-group and item-pair in the window of interest (367-3500ms after target onset). Bar color indicates target word; words are ordered on the plots as in the legend."}
+
+fineyouwincolors <- c("#F8766D", "#6b4e00", "#7CAE00", "#009752", "#4ec3ff", "#47007c", "#c30084", "#FF61CC")
+
+
+flickrVs_dspairs_noorig <- ggplot(subset(flickr_ds_pairs, study!="orig"),
+                                    aes(AgeGroup3, pair_agebin_ds,fill = pair))+
+  stat_summary(fun.y=mean, geom="bar", position = "dodge", color ="black")+
+  geom_vline(xintercept = c(1.5,2.5))+
+   facet_wrap(~study, labeller = labeller(study_label, study = study_label))+
+  geom_hline(yintercept=0)+coord_cartesian(ylim=c(-.15,.2))+
+  theme_bw(base_size=18)+
+  ylab(label = "Increase in Target Looking")+ xlab("Age Group\n (months)")+
+  scale_x_discrete(breaks=c("(5.9,8]", "(8,11]", "(11,15]"),
+                      labels=c("6-7", "8-10", "11-14"))+
+  theme(legend.position = "none")+
+  scale_fill_manual(values=fineyouwincolors)
+
+flickrVs_dspairs_justorig <- ggplot(subset(flickr_ds_pairs, study=="orig"),
+                                    aes(AgeGroup3, pair_agebin_ds,fill = pair))+
+  stat_summary(fun.y=mean, geom="bar", position = "dodge", color ="black")+
+  geom_vline(xintercept = c(1.5,2.5))+
+   facet_wrap(~study, labeller = labeller(study_label, study = study_label))+
+  geom_hline(yintercept=0)+coord_cartesian(ylim=c(-.15,.2))+
+  theme_bw(base_size=18)+
+  ylab(label = "")+ xlab("Age Group\n (months)")+
+  scale_x_discrete(breaks=c("(5.9,8]", "(8,11]", "(11,15]"),
+                      labels=c("6-7", "8-10", "11-14"))+
+  labs(fill= "Item-Pair")+
+  scale_fill_manual(values=fineyouwincolors)
+
+
+flickrVs_dspairs_graph <- grid.arrange(flickrVs_dspairs_noorig, flickrVs_dspairs_justorig,ncol = 2, widths = c(1,1))
+```
+
+```{r f-Ss, comment = F, fig.height=4.2, fig.width=7, message = F, echo = F, warning = F, fig.cap="Subject means. The panels show average performance for each infant in the mispronunciation condition, new-talker condition, and B&S12, left to right. The y-axis indicates infants’ subject mean difference scores in the window of interest (367-3500ms after target onset) across item-pairs. Lollipop color indicates age-group. The white line and purple confidence band indicate a smoothed loess (local-estimator) fit over the data (span=2). "}
+flickrVs_Ssds_justorig <- ggplot(subset(flickr_dsmelt_all3, numpairs>3 & study=="orig"), 
+       aes(AgeMonths, diffscore, xend=AgeMonths, yend=0, 
+           group=SubjectNumber, color = AgeGroup3))+
+  stat_summary(fun.y=mean, geom = "point", size=3)+
+  stat_summary(fun.y=mean, geom = "segment")+
+  xlab("Age\n (months)")+ylab("")+
+  scale_x_continuous(breaks=c(6,8,10,12,14,16,18,20))+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(group=study),color = "white", fill = "purple", span=2)+
+  facet_wrap(~study,labeller = labeller(study_label, study = study_label)) + coord_cartesian(ylim=c(-.25,.5))+
+  theme_bw(base_size=18)+theme(legend.position = "none")
+
+flickrVs_Ssds_noorig <- ggplot(subset(flickr_dsmelt_all3, numpairs>3 & study!="orig"), 
+       aes(AgeMonths, diffscore, xend=AgeMonths, yend=0, 
+           group=SubjectNumber, color = AgeGroup3))+
+  stat_summary(fun.y=mean, geom = "point", size=3)+
+  stat_summary(fun.y=mean, geom = "segment")+
+  xlab("Age\n (months)")+ylab("Incrase in Target Looking")+
+  scale_x_continuous(breaks=c(6,8,10,12,14,16,18,20))+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(group=study),color = "white", fill = "purple", span=2)+
+  facet_wrap(~study,labeller = labeller(study_label, study = study_label)) + coord_cartesian(ylim=c(-.25,.5))+
+  theme_bw(base_size=18)+theme(legend.position = "none")
+
+
+flickrVs_Ssds_graph <- grid.arrange(flickrVs_Ssds_noorig, flickrVs_Ssds_justorig, ncol = 2, 
+             widths = c(1.7,1))
+```
+
+#Discussion
+At 6-7 months infants understood words equally when said by their own mother correctly, when said incorrectly, and when said by a new talker. In contrast, by 11-14 months, infants’ comprehension was impaired for phoneme but not talker changes. 
+
+Studies of infant memory have shown that minor changes to relevant or irrelevant features of a training situation can interfere with recall [e.g.: @Rovee-Collier1992]. Indeed, in discrimination studies infants have failed to recognize trained syllables given  non-phonetic alterations [e.g. @Singh2004, cf. @VanHeugten2012]. Before we tested younger infants, it was equally plausible that indexical and phonetic alterations would affect word comprehension differently.  Our results suggest that this is not the case. 
+
+Unexpectedly, infants’ performance at 8-10 months was at chance in both conditions.  In B&S12, children at this age had performed as well as the 6-7-month-olds had. Statistical comparisons between the present conditions and B&S12 presented a mixed picture (see Table 2), so we cannot be certain that there is truly a difference between the original and new results, i.e. we may be simply failing to replicate a weak effect at this age. Alternatively, 8-10 month olds’ poor performance in the current study may reflect a genuine linguistic change aligned with phonetic reorganization.  As infants converge on their language’s speech sounds, they may recognize that broad acoustic similarity is not an appropriate criterion, and instead use overly stringent matching [@Werker2005a]. This account is consistent with recent EEG results that found 9-month-olds only responded to a labeling mismatch when the speaker was their mother, rather than an experimenter [@Parise2012]. This possibility is intriguing, though it is unclear why a change in phonetic representation would lead infants to be more sensitive to talker variation rather than less. Future work could examine this by studying the same infants longitudinally using the present manipulations.
+
+Our 6-7-month-old results suggest that whether infants readily abstract away from a talker’s idiosyncratic voice characteristics or not, their speech-to-lexicon matching ability is quite (even overly) flexible, at least under the present referential conditions. More extreme manipulations in either domain might render a different pattern of results.
+
+Not until 11-14 months did infants show the adult-like pattern: unhindered comprehension of a new talker [concordantly with previous studies: @Mani2010; @Swingley2000; -@Swingley2002b] *and* poor performance with mispronounced words. This suggests that infants must learn which sources of variation are linguistically meaningful. Perhaps this occurs as infants gain experience with multiple talkers [e.g.: @Rost2009, -@Rost2010].  Given that the talkers infants hear use similar words, infants could simplify their representations by discovering the phonetic function that relates, say, their mother’s lexicon with their father’s. Such a discovery could be mediated by meaning (mommy’s and daddy’s *apple* both refer to the fruit) or just the word-forms alone [@Seidl2014]. Simultaneous manipulation of both indexical and phonetic properties could elucidate this. 
+
+Young infants’ understanding of words produced by an unfamiliar talker could mean that infants have learned to generalize over talkers.  Other infants drawn from a similar population heard, on average, 60% of common-word instances from their mother (Bergelson & Aslin, *under review*), so if infants had talker-specific representations, we would expect infants to perform better in B&S12 than here.  Alternatively, together with infants’ performance on mispronounced-vowel words, the present results may indicate that infants’ matching criteria are sufficiently lax to match a wide range of pronunciations to their early words, and this does not change until around the first birthday. 
+
+Taken together, our results suggest that speech-sound reorganization occurs in tandem with lexical growth over the first postnatal year. Although infants might reveal a performance cost with more thorough individual testing, here infants were unbeholden to highly familiar tokens during early word comprehension. Infants' lexical representations allow them to connect novel word tokens to the conceptual categories they denote, at the same (modest) levels demonstrated for correctly-pronounced maternal speech. Between 6 and 14 months, they reorganize their speech-sound interpretation to continue accepting words spoken with new voices but to exclude realizations that deviate from the conventional form in their phonology. 
+
+#References
